@@ -156,8 +156,7 @@ gunicorn app:app
 
 The app provides:
 
-- `GET /` for a health check.
-- `POST /chat` for direct API chat requests.
+- `GET /` to show the current webhook information.
 - `POST /telegram/webhook` for Telegram webhook updates.
 
 ## How the Flask App Works
@@ -170,21 +169,15 @@ The app then creates a Gemini client and configures it with:
 - Google Search grounding.
 - A chat session per `session_id` or Telegram chat ID, stored in memory.
 
-The basic flow for `POST /chat` is:
-
-1. A user sends JSON with a `message`.
-2. Flask reads the message and `session_id`.
-3. The app finds or creates a Gemini chat session for that `session_id`.
-4. Gemini receives the message with previous chat context.
-5. Flask returns Gemini's reply as JSON.
-
-The basic flow for Telegram is:
+The basic flow for `/telegram/webhook` is:
 
 1. A Telegram user sends a message to the bot.
 2. Telegram sends the update to `/telegram/webhook`.
 3. Flask extracts the chat ID and text.
 4. The app sends the text to Gemini using the Telegram chat ID as memory.
 5. The app sends Gemini's reply back to the user through Telegram.
+
+The `/` route is only for checking the app. It returns information such as the configured Gemini model, webhook path, and webhook URL.
 
 ## Why Delete the Webhook on Startup?
 
@@ -200,10 +193,8 @@ Resetting the webhook gives the app a clean start:
 
 For production apps, you may choose not to drop pending updates if every message must be processed.
 
-Example direct chat request:
+Example webhook info request:
 
 ```bash
-curl -X POST "https://<RENDER_SERVICE_NAME>.onrender.com/chat" \
-  -H "Content-Type: application/json" \
-  -d '{"session_id":"demo","message":"I am building a data pipeline with Meltano."}'
+curl "https://<RENDER_SERVICE_NAME>.onrender.com/"
 ```
